@@ -2,8 +2,8 @@
 
 ## Mission
 
-CurrantMark is a small, native macOS Markdown viewer and PDF exporter. Keep it
-fast to understand, fast to launch, and easy to replace at its real seams.
+CurrantMark is a native macOS Markdown Browser. Keep it fast to understand,
+fast to launch, and easy to replace at its real seams.
 This file is the operating guide for agents and contributors. The `docs/`
 directory is the deeper project record.
 
@@ -19,7 +19,7 @@ directory is the deeper project record.
 
 ## Product boundaries
 
-The current phase is a viewer. Do not add editing, Neovim integration, Vim
+The current phase is a browser. Do not add editing, Neovim integration, Vim
 keybindings, presentation mode, plugins, theme-management UI,
 project/workspace management, AI, collaboration, or cloud sync unless the
 user explicitly changes the scope.

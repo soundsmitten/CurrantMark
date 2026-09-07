@@ -2,9 +2,10 @@
 
 ## Current goal
 
-CurrantMark should be a small daily-use native macOS Markdown viewer: open a
-Markdown file, render it cleanly, refresh when it changes, preserve the reader’s
-place, and export the rendered result to PDF.
+CurrantMark should be a daily-use native macOS Markdown Browser: open a
+Markdown file, render it cleanly, follow links between documents, refresh when
+it changes, preserve the reader’s place, and export the rendered result to
+PDF.
 
 ## Current requirements
 

@@ -1,12 +1,12 @@
 # CurrantMark
 
-CurrantMark is a small, native macOS Markdown previewer and PDF exporter.
+CurrantMark is a native macOS Markdown Browser.
 
 > **Project status:** CurrantMark is currently an experiment under active
 > design. Feedback and bug reports are welcome, but I'm not accepting external
 > pull requests yet.
 
-The first version is intentionally a viewer, not an editor. It opens Markdown
+The first version is intentionally a browser, not an editor. It opens Markdown
 files, follows links between them with Back and Forward navigation, watches the
 current file for changes, renders GitHub-Flavored Markdown, and exports the
 rendered page to PDF. Heading bookmarks can be toggled from preview gutters,
