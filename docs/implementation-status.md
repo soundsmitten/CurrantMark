@@ -41,34 +41,32 @@ architecture.
 
 ## Latest validation
 
-On 2026-09-07, `swift test` completed successfully on arm64 macOS:
+On 2026-09-07, `swift build` and `swift test` completed successfully on arm64
+macOS (Swift 6.3.1), covering the bookmark and split-pane/navigation work:
 
-- 13 tests executed.
-- 0 failures.
+- Both executables (`CurrantMarkApp` and `currantmark`) built cleanly.
+- 17 tests executed, 0 failures.
 - The tests cover GFM headings, task-list checkboxes, tables, stylesheet
-  injection, escaped code, links, images, base URLs, UTF-8 file loading, and
-  missing-file errors. Preference tests cover the discoverable default and
+  injection, escaped code, links, images, base URLs, UTF-8 file loading,
+  missing-file errors, document indexing, resolved links, heading anchors, and
+  duplicate anchor names. Preference tests cover the discoverable default and
   persistence of the disabled automatic-picker value. Navigation tests cover
-  backward/forward traversal and discarding stale forward history. Processor
-  tests cover document indexing, resolved links, heading anchors, and duplicate
-  anchor names.
+  backward/forward traversal and discarding stale forward history. Bookmark
+  tests cover toggling a heading bookmark on and off and leaving the in-memory
+  library unchanged when persistence fails.
+- Building surfaced one real defect, now fixed: `Sources/CurrantMark/main.swift`
+  called the `@MainActor`-isolated `AppDelegate()` initializer and
+  `makeMainMenu()` from the nonisolated top-level `main.swift` context, which
+  the Swift 6 compiler rejects as a strict-concurrency error. Both calls are
+  now wrapped in `MainActor.assumeIsolated`, which is safe because top-level
+  `main.swift` code always runs synchronously on the main thread before any
+  concurrency infrastructure starts.
 - `swift-markdown` is pinned to an upstream revision with HTML escaping for
   text and code output.
-- The CLI was exercised against `README.md`; HTML output succeeded and PDF
-  export produced a valid one-page PDF at `/tmp/currantmark-readme.pdf`.
-- The programmatic application and File menus were verified in the running app.
-- Opening two files in one Finder-style request created two independent
-  document windows; closing the front window revealed the other rendered file.
-- The first captured rendered window used the dark document background, with
-  no empty white preview surface presented.
-- The launch picker to rendered-document transition was reproduced after the
-  lifecycle fix. The document remained open, and closing it left the
-  CurrantMark process running for subsequent Open actions.
-- With the automatic-picker preference disabled, a fresh launch remained
-  windowless while the CurrantMark process stayed running.
-- Bookmark source and persistence tests were added after this validation run;
-  the bookmark UI, split-pane implementation, new tests, and persistence round
-  trip have not yet been built or exercised at runtime.
+- This was a build/test-only validation. The CLI's PDF export, the running
+  app's menus, window lifecycle, split-pane behavior, and bookmark gutter UI
+  have not been exercised interactively since the bookmark and navigation
+  features landed.
 
 ## Known limitations
 
