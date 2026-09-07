@@ -57,7 +57,11 @@ public final class PreviewView: NSView {
     }
 
     public func scrollToAnchor(_ anchor: String) {
-        guard let data = try? JSONSerialization.data(withJSONObject: anchor),
+        // NSJSONSerialization requires an Array/Dictionary top-level object and
+        // raises an uncaught NSException (not a catchable Swift error) for a bare
+        // String, so use JSONEncoder here instead, which safely encodes a String
+        // as a top-level JSON value.
+        guard let data = try? JSONEncoder().encode(anchor),
               let encodedAnchor = String(data: data, encoding: .utf8) else {
             return
         }
