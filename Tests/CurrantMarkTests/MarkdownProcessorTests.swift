@@ -89,4 +89,40 @@ final class MarkdownProcessorTests: XCTestCase {
 
         XCTAssertEqual(document.index.headings.map(\.anchor), ["notes", "notes-1"])
     }
+
+    func testEmitsBaseTagPointingAtTheDocumentURL() throws {
+        let baseURL = URL(fileURLWithPath: "/tmp/README.md")
+        let document = try SwiftMarkdownProcessor().render(
+            markdown: "Hello",
+            style: RenderStyle(stylesheet: ""),
+            baseURL: baseURL
+        )
+
+        XCTAssertTrue(document.html.contains("<base href=\"file:///tmp/README.md\">"), document.html)
+    }
+
+    func testOmitsBaseTagWhenBaseURLIsNil() throws {
+        let document = try SwiftMarkdownProcessor().render(
+            markdown: "Hello",
+            style: RenderStyle(stylesheet: ""),
+            baseURL: nil
+        )
+
+        XCTAssertFalse(document.html.contains("<base"), document.html)
+    }
+
+    func testEscapesSpecialCharactersInTheBaseHrefAttribute() throws {
+        // "&" is a valid, unencoded path character that URL does not
+        // percent-encode, so it is the realistic case that requires the
+        // base href to be HTML-escaped to keep the generated markup
+        // well-formed.
+        let baseURL = URL(fileURLWithPath: "/tmp/Q&A/README.md")
+        let document = try SwiftMarkdownProcessor().render(
+            markdown: "Hello",
+            style: RenderStyle(stylesheet: ""),
+            baseURL: baseURL
+        )
+
+        XCTAssertTrue(document.html.contains("<base href=\"file:///tmp/Q&amp;A/README.md\">"), document.html)
+    }
 }

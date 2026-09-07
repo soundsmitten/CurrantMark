@@ -12,12 +12,18 @@ public struct SwiftMarkdownProcessor: MarkdownProcessor {
             indexCollector.index.headings,
             to: HTMLFormatter.format(parsedDocument)
         )
+        // A <base> tag lets relative references (e.g. an image sitting next
+        // to the Markdown file) resolve against the document's real location
+        // even though the HTML is ultimately loaded from a temporary file by
+        // the web view (see PreviewView/PDFExporter for why).
+        let baseTag = baseURL.map { "<base href=\"\(Self.htmlAttributeEscaped($0.absoluteString))\">" } ?? ""
         let document = """
         <!doctype html>
         <html>
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
+          \(baseTag)
           <style>\(style.stylesheet)</style>
         </head>
         <body>\(body)</body>
@@ -28,6 +34,14 @@ public struct SwiftMarkdownProcessor: MarkdownProcessor {
             baseURL: baseURL,
             index: indexCollector.index
         )
+    }
+
+    private static func htmlAttributeEscaped(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "\"", with: "&quot;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
     }
 
     private func addHeadingAnchors(_ headings: [DocumentHeading], to html: String) -> String {

@@ -9,6 +9,21 @@ public final class PreviewView: NSView {
     private var navigationDelegate: CompletionNavigationDelegate?
     private var headingAnchors: [String] = []
     private var bookmarkedAnchors: Set<String> = []
+    // WKWebView's loadHTMLString(_:baseURL:) never grants the web content
+    // process read access to local files referenced by relative path (e.g.
+    // an image sitting next to the Markdown source), even when baseURL is a
+    // file URL. Writing the generated HTML to disk and loading it with
+    // loadFileURL(_:allowingReadAccessTo:) is the documented way to let
+    // those relative references actually load; the generated HTML's <base>
+    // tag (see SwiftMarkdownProcessor) keeps relative-URL resolution
+    // pointed at the document's real location rather than this temp file's.
+    // The file is reused across reloads of this view and removed in deinit.
+    private let temporaryHTMLURL: URL = {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("CurrantMarkPreview", isDirectory: true)
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return directory.appendingPathComponent(UUID().uuidString).appendingPathExtension("html")
+    }()
     public var onLinkActivated: ((URL) -> Void)?
     public var onBookmarkActivated: ((String) -> Void)?
 
@@ -36,6 +51,11 @@ public final class PreviewView: NSView {
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    deinit {
+        let url = temporaryHTMLURL
+        try? FileManager.default.removeItem(at: url)
+    }
 
     public func load(
         _ document: RenderedDocument,
@@ -110,7 +130,11 @@ public final class PreviewView: NSView {
         )
         navigationDelegate = delegate
         webView.navigationDelegate = delegate
-        webView.loadHTMLString(document.html, baseURL: document.baseURL)
+        guard (try? document.html.write(to: temporaryHTMLURL, atomically: true, encoding: .utf8)) != nil else {
+            webView.loadHTMLString(document.html, baseURL: document.baseURL)
+            return
+        }
+        webView.loadFileURL(temporaryHTMLURL, allowingReadAccessTo: URL(fileURLWithPath: "/"))
     }
 
     private func installBookmarkMarkers() {
