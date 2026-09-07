@@ -211,9 +211,14 @@ private final class BreadcrumbButton: NSButton {
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
         trackingAreas.forEach(removeTrackingArea)
+        // .assumeInside makes the first synthesized event (posted whenever a
+        // tracking area is installed while the cursor happens to already be
+        // inside its rect, e.g. at launch) an exit rather than an enter, so
+        // installing this tracking area never spuriously triggers the
+        // hover-expand animation with no real mouse movement.
         addTrackingArea(NSTrackingArea(
             rect: bounds,
-            options: [.mouseEnteredAndExited, .activeInActiveApp],
+            options: [.mouseEnteredAndExited, .activeInActiveApp, .assumeInside],
             owner: self
         ))
     }

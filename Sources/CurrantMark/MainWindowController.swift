@@ -79,6 +79,20 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
         toolbar.displayMode = .iconOnly
         window.toolbar = toolbar
         window.toolbarStyle = .unified
+
+        // When initialFirstResponder is left nil, AppKit auto-generates a
+        // key view loop the first time the window is shown and assigns
+        // initial first-responder status to the first control in that loop
+        // (e.g. a breadcrumb segment), independent of any makeFirstResponder
+        // call made here during init on the still-offscreen window. Pointing
+        // initialFirstResponder at the inert contentView prevents any real
+        // control from picking up a focus ring merely by being first in the
+        // auto-computed loop.
+        window.initialFirstResponder = contentView
+        // Guarantee no control (e.g. the breadcrumb bar) appears
+        // pre-focused/hovered when the window is first shown, regardless
+        // of window state restoration.
+        window.makeFirstResponder(nil)
     }
 
     @available(*, unavailable)

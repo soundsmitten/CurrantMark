@@ -23,6 +23,10 @@ final class SettingsWindowController: NSWindowController {
         window.title = "Settings"
         window.center()
         window.isReleasedWhenClosed = false
+        // This is a small utility window with no state worth restoring
+        // across launches; state restoration is also the likely cause of
+        // the checkbox appearing pre-focused on first display.
+        window.isRestorable = false
         super.init(window: window)
 
         openPanelCheckbox.state = preferences.automaticallyShowsOpenPanelWhenNoDocumentsAreOpen
@@ -50,6 +54,19 @@ final class SettingsWindowController: NSWindowController {
             stackView.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -24),
             stackView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor)
         ])
+
+        // When initialFirstResponder is left nil, AppKit auto-generates a
+        // key view loop the first time the window is shown and assigns
+        // initial first-responder status to the first control in that loop
+        // (here, the checkbox), independent of any makeFirstResponder call
+        // made here during init on the still-offscreen window. Pointing
+        // initialFirstResponder at the inert contentView prevents the
+        // checkbox from picking up a focus ring merely by being first (and
+        // only) in the auto-computed loop.
+        window.initialFirstResponder = contentView
+        // Guarantee no control appears pre-focused when the window is first
+        // shown, regardless of window state restoration.
+        window.makeFirstResponder(nil)
     }
 
     @available(*, unavailable)

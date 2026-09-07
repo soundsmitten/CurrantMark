@@ -25,6 +25,10 @@ final class BookmarksWindowController: NSWindowController, NSTableViewDataSource
         window.title = "Bookmarks"
         window.minSize = NSSize(width: 360, height: 240)
         window.setFrameAutosaveName("CurrantMark.BookmarksWindow")
+        // Frame position/size is already persisted via the autosave name
+        // above; disabling restoration avoids the table view appearing
+        // pre-focused on first display.
+        window.isRestorable = false
         super.init(window: window)
 
         let column = NSTableColumn(identifier: CellIdentifier.bookmark)
@@ -62,6 +66,19 @@ final class BookmarksWindowController: NSWindowController, NSTableViewDataSource
             removeButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
             removeButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -10)
         ])
+
+        // When initialFirstResponder is left nil, AppKit auto-generates a
+        // key view loop the first time the window is shown and assigns
+        // initial first-responder status to the first control in that loop
+        // (here, the table view), independent of any makeFirstResponder call
+        // made here during init on the still-offscreen window. Pointing
+        // initialFirstResponder at the inert contentView prevents the table
+        // view from picking up a focus ring merely by being first in the
+        // auto-computed loop.
+        window.initialFirstResponder = contentView
+        // Guarantee no control appears pre-focused when the window is first
+        // shown, regardless of window state restoration.
+        window.makeFirstResponder(nil)
     }
 
     @available(*, unavailable)
