@@ -63,6 +63,7 @@ final class DocumentPreviewGroup: NSView {
     private func addSecondaryPreviewView() {
         let sourcePreviewView = activePreviewView
         let previewView = appendPreviewView()
+        evenlySplitPanes()
         guard let currentDocument else { return }
 
         sourcePreviewView.currentHeadingAnchor { [weak previewView] anchor in
@@ -73,6 +74,19 @@ final class DocumentPreviewGroup: NSView {
                 previewView?.window?.makeFirstResponder(previewView?.webView)
             }
         }
+    }
+
+    /// Adding a second arranged subview to a split view whose first subview
+    /// already fills the available space does not by itself give the new
+    /// pane a visible width, so explicitly move the divider to the midpoint
+    /// once both panes exist.
+    private func evenlySplitPanes() {
+        guard previewViews.count == 2 else { return }
+        splitView.layoutSubtreeIfNeeded()
+        let axisLength = splitView.isVertical ? splitView.bounds.width : splitView.bounds.height
+        guard axisLength > 0 else { return }
+        let midpoint = (axisLength - splitView.dividerThickness) / 2
+        splitView.setPosition(midpoint, ofDividerAt: 0)
     }
 
     private func removeSecondaryPreviewView() {
