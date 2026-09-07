@@ -73,6 +73,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
         navigationBar.onSelectHistoryItem = { [weak self] index in
             self?.navigateThroughHistory(to: index)
         }
+        navigationBar.onRequestMainPaneFocus = { [weak self] in
+            self?.previewGroup.focusActivePane()
+        }
 
         let toolbar = NSToolbar(identifier: "CurrantMark.DocumentToolbar")
         toolbar.delegate = self
@@ -124,6 +127,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
             if let anchor = url.fragment {
                 self?.previewGroup.scrollToAnchor(anchor)
             }
+            self?.previewGroup.focusActivePane()
         }
         newSource.startWatching { [weak self] in self?.loadCurrentDocument(preservingScroll: true) }
     }
@@ -154,6 +158,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
         } else if Self.markdownExtensions.contains(url.pathExtension.lowercased()) {
             if url.removingFragment == documentURL, let anchor = url.fragment {
                 previewGroup.scrollToAnchor(anchor)
+                previewGroup.focusActivePane()
             } else {
                 navigate(to: url.standardizedFileURL, recordingHistory: true)
             }
@@ -231,6 +236,14 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
         previewGroup.isSplit
     }
 
+    func focusNavigationBar() {
+        navigationBar.focusCurrentSegment()
+    }
+
+    func cyclePaneFocus() {
+        previewGroup.cycleFocus()
+    }
+
     private func toggleBookmark(at anchor: String) {
         guard let documentURL,
               let heading = currentDocument?.index.headings.first(where: {
@@ -272,6 +285,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
             currentDocument = document
             navigationBar.update(
                 document: document,
+                documentURL: input.url,
                 fallbackTitle: input.url.lastPathComponent
             )
             refreshBookmarks()

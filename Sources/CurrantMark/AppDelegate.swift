@@ -108,6 +108,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate,
             keyEquivalent: "/"
         )
         splitItem.target = self
+        let cyclePaneFocusItem = viewMenu.addItem(
+            withTitle: "Cycle Pane Focus",
+            action: #selector(cyclePaneFocus(_:)),
+            keyEquivalent: "\r"
+        )
+        // Control-Tab is reserved system-wide (window-tab switching / Full
+        // Keyboard Access), so it never reaches the app's menu key
+        // equivalents. Control-Return does not collide with anything.
+        cyclePaneFocusItem.keyEquivalentModifierMask = [.control]
+        cyclePaneFocusItem.target = self
+        let focusNavigationBarItem = viewMenu.addItem(
+            withTitle: "Focus Breadcrumb Bar",
+            action: #selector(focusNavigationBar(_:)),
+            keyEquivalent: "l"
+        )
+        focusNavigationBarItem.target = self
 
         let bookmarksMenu = NSMenu(title: "Bookmarks")
         bookmarksMenu.delegate = self
@@ -149,6 +165,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate,
                 ? "Hide Split"
                 : "Show Split"
             return activeWindowController != nil
+        case #selector(cyclePaneFocus(_:)), #selector(focusNavigationBar(_:)):
+            return activeWindowController != nil
         default:
             return true
         }
@@ -181,6 +199,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate,
 
     @MainActor @objc private func toggleSplit(_ sender: Any?) {
         activeWindowController?.toggleSplit()
+    }
+
+    @MainActor @objc private func cyclePaneFocus(_ sender: Any?) {
+        activeWindowController?.cyclePaneFocus()
+    }
+
+    @MainActor @objc private func focusNavigationBar(_ sender: Any?) {
+        activeWindowController?.focusNavigationBar()
     }
 
     @MainActor @objc private func showSettings(_ sender: Any?) {
@@ -275,11 +301,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate,
     @MainActor
     private func open(bookmark: DocumentBookmark) {
         let resolvedURL = bookmarkController.resolvedURL(for: bookmark).standardizedFileURL
+        // If the bookmarked document is already open in some window, reuse
+        // that window rather than opening a duplicate.
         if let existing = windowControllers.first(where: {
             $0.documentURL == resolvedURL.removingFragment
         }) {
             existing.open(bookmark: bookmark)
             existing.window?.makeKeyAndOrderFront(nil)
+            return
+        }
+
+        // Otherwise, navigate the active window to the bookmark instead of
+        // opening a new one -- MainWindowController.open(bookmark:) already
+        // handles navigating to a different document. Only fall back to
+        // creating a new window if there isn't one to reuse.
+        if let active = activeWindowController {
+            active.open(bookmark: bookmark)
+            active.window?.makeKeyAndOrderFront(nil)
             return
         }
 

@@ -30,11 +30,20 @@ architecture.
 - A links-only dropdown on the current document breadcrumb.
 - Folder links that present a Markdown picker rooted at the linked folder.
 - Back and Forward toolbar controls that appear after navigation begins.
+- Keyboard navigation for the breadcrumb bar: a shortcut focuses it, arrow
+  keys move between segments, Space peeks the focused segment's link dropdown
+  (any segment with known links, not only the current one) without navigating
+  or losing focus, Return navigates the focused segment without touching the
+  dropdown, Escape returns focus to the document, and Cmd-click is the mouse
+  equivalent of Space.
 - One optional same-document horizontal split with independent scroll positions.
-- A View-menu command that toggles the split.
+- A View-menu command that toggles the split, and a keyboard shortcut that
+  cycles keyboard focus between the two panes.
 - Persistent heading bookmarks with gutter-style preview markers.
 - An app-wide Bookmarks menu with current-document and recent destinations.
 - A separate Bookmarks window for opening and removing saved locations.
+- Opening a bookmark reuses the active window (or an already-open window for
+  that document) instead of always opening a new one.
 - PDF export from the current rendered document.
 - Focused Markdown processor and document-source tests.
 - README, agent instructions, project documentation, and MIT license.
@@ -89,12 +98,21 @@ covering the bookmark and split-pane/navigation work:
     `initialFirstResponder` at each window's inert content view. A related
     false-positive hover (`BreadcrumbButton`'s tracking area lacked
     `.assumeInside`) was fixed the same way.
+- Follow-on interactive testing of the breadcrumb keyboard/mouse model went
+  through several corrections before landing on the behavior described above:
+  Return originally simulated a click and could open the dropdown instead of
+  navigating; Space originally only worked on the current segment and did not
+  keep focus in the bar after the dropdown closed; the pane-cycling shortcut
+  was moved from Control-Tab to Control-Return because Control-Tab is
+  reserved by macOS for window/tab switching and never reaches the app. Link
+  data for non-current segments is served from a per-URL cache populated as
+  each document is rendered, since `DocumentNavigationHistory` itself only
+  stores URLs.
 - `swift-markdown` is pinned to an upstream revision with HTML escaping for
   text and code output.
 - Remaining unverified areas: the CLI's PDF export path has not been manually
   re-tested with an image-containing document since the local-image-loading
-  fix; keyboard navigation of the breadcrumb bar and a shortcut to cycle
-  focus between split panes are still open work, not yet implemented.
+  fix.
 
 ## Known limitations
 

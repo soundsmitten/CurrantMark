@@ -114,6 +114,29 @@ final class DocumentPreviewGroup: NSView {
         activePreviewView.currentHeadingAnchor(completion: completion)
     }
 
+    /// Moves keyboard focus to whichever pane is currently considered
+    /// active, without changing which pane that is (unlike cycleFocus()).
+    /// Used to hand focus back to the document content after a breadcrumb
+    /// interaction (Escape, Return, or a link-dropdown selection) ends.
+    func focusActivePane() {
+        window?.makeFirstResponder(activePreviewView.webView)
+    }
+
+    /// Moves keyboard focus to the next preview pane. With a single pane
+    /// this simply (re)focuses it; with two panes it toggles between them.
+    func cycleFocus() {
+        guard previewViews.count > 1 else {
+            window?.makeFirstResponder(previewViews.first?.webView)
+            return
+        }
+        let current = activePreviewView
+        let currentIndex = previewViews.firstIndex(where: { $0 === current }) ?? 0
+        let nextIndex = (currentIndex + 1) % previewViews.count
+        let nextView = previewViews[nextIndex]
+        lastActivePreviewView = nextView
+        window?.makeFirstResponder(nextView.webView)
+    }
+
     @discardableResult
     private func appendPreviewView() -> PreviewView {
         let previewView = PreviewView(frame: .zero)
