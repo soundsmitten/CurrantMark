@@ -42,18 +42,20 @@ architecture.
 ## Latest validation
 
 On 2026-09-07, `swift build` and `swift test` completed successfully on arm64
-macOS (Swift 6.3.1), covering the bookmark and split-pane/navigation work:
+macOS (Swift 6.3.1), and the built app was run and exercised interactively,
+covering the bookmark and split-pane/navigation work:
 
 - Both executables (`CurrantMarkApp` and `currantmark`) built cleanly.
-- 17 tests executed, 0 failures.
+- 20 tests executed, 0 failures.
 - The tests cover GFM headings, task-list checkboxes, tables, stylesheet
   injection, escaped code, links, images, base URLs, UTF-8 file loading,
-  missing-file errors, document indexing, resolved links, heading anchors, and
-  duplicate anchor names. Preference tests cover the discoverable default and
-  persistence of the disabled automatic-picker value. Navigation tests cover
-  backward/forward traversal and discarding stale forward history. Bookmark
-  tests cover toggling a heading bookmark on and off and leaving the in-memory
-  library unchanged when persistence fails.
+  missing-file errors, document indexing, resolved links, heading anchors,
+  duplicate anchor names, and `<base>` tag emission/escaping. Preference tests
+  cover the discoverable default and persistence of the disabled
+  automatic-picker value. Navigation tests cover backward/forward traversal
+  and discarding stale forward history. Bookmark tests cover toggling a
+  heading bookmark on and off and leaving the in-memory library unchanged when
+  persistence fails.
 - Building surfaced one real defect, now fixed: `Sources/CurrantMark/main.swift`
   called the `@MainActor`-isolated `AppDelegate()` initializer and
   `makeMainMenu()` from the nonisolated top-level `main.swift` context, which
@@ -61,12 +63,38 @@ macOS (Swift 6.3.1), covering the bookmark and split-pane/navigation work:
   now wrapped in `MainActor.assumeIsolated`, which is safe because top-level
   `main.swift` code always runs synchronously on the main thread before any
   concurrency infrastructure starts.
+- Interactive testing surfaced and fixed four further defects, none caught by
+  the test suite because they require a real WKWebView or window:
+  - `PreviewView.scrollToAnchor(_:)` used `NSJSONSerialization` on a bare
+    `String`, which raises an uncaught Objective-C exception (not a catchable
+    Swift error) and crashed the app the first time a split pane synced its
+    scroll position. Fixed by switching to `JSONEncoder`.
+  - Adding a second split pane did not give it a visible width, since
+    `NSSplitView.addArrangedSubview` does not itself redistribute space from
+    an existing pane that already fills the view. Fixed by explicitly setting
+    the divider position to the midpoint after the second pane is added.
+  - `WKWebView.loadHTMLString(_:baseURL:)` does not grant the WebContent
+    process read access to local files referenced by relative path, so
+    Markdown images on disk silently failed to load in both the preview and
+    PDF export. Fixed by writing the generated HTML to a temporary file and
+    loading it with `loadFileURL(_:allowingReadAccessTo:)`, with a `<base
+    href>` tag injected into the HTML so relative references still resolve
+    against the real document location rather than the temp file's location.
+  - The breadcrumb bar and the Settings checkbox showed a system focus ring
+    the moment their window first appeared. Root cause: leaving
+    `NSWindow.initialFirstResponder` nil lets AppKit auto-generate a key view
+    loop the first time a window is shown and assign initial first-responder
+    status to the first control in it, independent of any
+    `makeFirstResponder` call made earlier during `init`. Fixed by pointing
+    `initialFirstResponder` at each window's inert content view. A related
+    false-positive hover (`BreadcrumbButton`'s tracking area lacked
+    `.assumeInside`) was fixed the same way.
 - `swift-markdown` is pinned to an upstream revision with HTML escaping for
   text and code output.
-- This was a build/test-only validation. The CLI's PDF export, the running
-  app's menus, window lifecycle, split-pane behavior, and bookmark gutter UI
-  have not been exercised interactively since the bookmark and navigation
-  features landed.
+- Remaining unverified areas: the CLI's PDF export path has not been manually
+  re-tested with an image-containing document since the local-image-loading
+  fix; keyboard navigation of the breadcrumb bar and a shortcut to cycle
+  focus between split panes are still open work, not yet implemented.
 
 ## Known limitations
 
