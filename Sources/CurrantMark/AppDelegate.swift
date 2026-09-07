@@ -105,7 +105,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate,
         let splitItem = viewMenu.addItem(
             withTitle: "Show Split",
             action: #selector(toggleSplit(_:)),
-            keyEquivalent: "\\"
+            keyEquivalent: "/"
         )
         splitItem.target = self
 
