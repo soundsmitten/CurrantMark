@@ -31,6 +31,9 @@ user explicitly changes the scope.
 - Use `MarkdownProcessor` for the replaceable Markdown/rendering boundary.
   Never implement a second Markdown parser in the app.
 - Preview and PDF export must consume the same `RenderedDocument` model.
+- A document window may show one optional second preview pane, but both panes
+  must consume the same document session. Different documents belong in
+  different windows.
 - Keep document sources abstract enough for future unsaved buffers or editor
   integrations, but do not create protocols for types with no real alternate
   implementation.

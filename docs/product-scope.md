@@ -11,6 +11,12 @@ place, and export the rendered result to PDF.
 - Open Markdown files through a standard Open panel.
 - Open Markdown files from Finder.
 - Open each document in its own native window.
+- Show one optional second pane for an independently scrollable position in the
+  same document; never mix different documents in one window's split view.
+- Follow links between Markdown files with Back and Forward navigation.
+- Follow anchor and folder links without exposing raw Markdown.
+- Bookmark headings from the preview and revisit them from an app-wide menu or
+  Bookmarks window.
 - Render GitHub-Flavored Markdown.
 - Refresh automatically after on-disk changes.
 - Preserve scroll position reasonably across refreshes.

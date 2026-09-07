@@ -2,9 +2,17 @@
 
 CurrantMark is a small, native macOS Markdown previewer and PDF exporter.
 
+> **Project status:** CurrantMark is currently an experiment under active
+> design. Feedback and bug reports are welcome, but I'm not accepting external
+> pull requests yet.
+
 The first version is intentionally a viewer, not an editor. It opens Markdown
-files, watches the current file for changes, renders GitHub-Flavored Markdown,
-and exports the rendered page to PDF.
+files, follows links between them with Back and Forward navigation, watches the
+current file for changes, renders GitHub-Flavored Markdown, and exports the
+rendered page to PDF. Heading bookmarks can be toggled from preview gutters,
+opened from the Bookmarks menu, and managed in a separate app-wide window. A
+document can be split into independently scrollable preview panes without
+mixing different documents in one window.
 
 ## Architecture
 
@@ -23,6 +31,13 @@ FileDocumentSource -> MarkdownProcessor -> RenderedDocument -> PreviewView
 - `RenderedDocument` is the shared model for preview and export.
 - `PreviewView` owns the AppKit/WebKit presentation boundary and restores
   the browser scroll offset after a refresh.
+- `DocumentPreviewGroup` can present one rendered document in an optional
+  second, independently scrollable pane.
+- `DocumentNavigationHistory` keeps linked-document navigation independent of
+  AppKit and WebKit.
+- `BookmarkStore` persists an app-wide, versioned bookmark library as JSON;
+  `BookmarkController` supplies the shared actions used by preview, menus, and
+  the Bookmarks window.
 - `PDFExporter` asks WebKit to print the same rendered HTML used by preview.
 - `AppDelegate` and `MainWindowController` are the macOS shell and command
   wiring. Actions are methods on the controller, so a future command palette

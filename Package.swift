@@ -5,7 +5,7 @@ let package = Package(
     name: "CurrantMark",
     platforms: [.macOS(.v13)],
     products: [
-        .executable(name: "CurrantMark", targets: ["CurrantMark"]),
+        .executable(name: "CurrantMarkApp", targets: ["CurrantMark"]),
         .executable(name: "currantmark", targets: ["CurrantMarkCLI"])
     ],
     dependencies: [

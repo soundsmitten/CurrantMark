@@ -39,7 +39,7 @@ struct CurrantMarkCLI {
         return try SwiftMarkdownProcessor().render(
             markdown: input.contents,
             style: .bundled,
-            baseURL: input.url.deletingLastPathComponent()
+            baseURL: input.url
         )
     }
 

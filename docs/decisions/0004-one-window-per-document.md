@@ -21,4 +21,6 @@ The File menu remains application-owned and routes export to the key window.
 
 Multiple Markdown files can remain open and refresh independently. Future
 window-level commands have an explicit active-document target without adding a
-global document store. Session restoration remains deferred.
+global document store. Closing the final document leaves the application
+running so a later Dock activation can present the Open panel. Session
+restoration remains deferred.

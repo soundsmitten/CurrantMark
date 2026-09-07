@@ -13,7 +13,7 @@ styling, or PDF preparation in a CLI would create drift from the app.
 
 Move document models, file sources, Markdown processing, styling resources,
 and WebKit PDF export into `CurrantMarkCore`. Keep the GUI shell in the
-`CurrantMark` executable and add a `currantmark` executable that consumes the
+`CurrantMarkApp` GUI product and add a `currantmark` executable that consumes the
 same core pipeline.
 
 The CLI supports HTML to standard output and PDF export to an explicit path:
