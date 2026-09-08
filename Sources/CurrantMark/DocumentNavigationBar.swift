@@ -123,7 +123,6 @@ final class DocumentNavigationBar: NSView {
     private func updateSegmentAppearance() {
         for (index, segment) in segments.enumerated() {
             segment.isCurrent = index == selectedIndex
-            segment.showsDisclosure = !(links(atSegment: index) ?? []).isEmpty
         }
     }
 
@@ -305,14 +304,10 @@ private final class BreadcrumbButton: NSButton {
     var isCurrent = false {
         didSet { needsDisplay = true }
     }
-    var showsDisclosure = false {
-        didSet { needsDisplay = true }
-    }
-
     var idealWidth: CGFloat {
         let font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         let titleWidth = (title as NSString).size(withAttributes: [.font: font]).width
-        return ceil(titleWidth) + 42
+        return ceil(titleWidth) + 30
     }
 
     init(title: String, index: Int, url: URL) {
@@ -408,18 +403,5 @@ private final class BreadcrumbButton: NSButton {
         NSColor.separatorColor.setStroke()
         path.stroke()
         super.draw(dirtyRect)
-
-        if showsDisclosure {
-            let chevron = NSImage(
-                systemSymbolName: "chevron.down",
-                accessibilityDescription: "Show document links"
-            )
-            chevron?.draw(in: NSRect(
-                x: bounds.maxX - 24,
-                y: bounds.midY - 5,
-                width: 10,
-                height: 10
-            ))
-        }
     }
 }

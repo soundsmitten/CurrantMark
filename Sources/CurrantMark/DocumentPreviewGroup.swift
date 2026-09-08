@@ -11,6 +11,8 @@ final class DocumentPreviewGroup: NSView {
     }
 
     private let splitView = NSSplitView()
+    private let searchBar = DocumentSearchBar(frame: .zero)
+    private var searchBarHeightConstraint: NSLayoutConstraint?
     private var previewViews: [PreviewView] = []
     private weak var lastActivePreviewView: PreviewView?
     private var currentDocument: RenderedDocument?
@@ -21,14 +23,32 @@ final class DocumentPreviewGroup: NSView {
 
         splitView.isVertical = true
         splitView.dividerStyle = .thin
+        searchBar.isHidden = true
+        searchBar.translatesAutoresizingMaskIntoConstraints = false
         splitView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(searchBar)
         addSubview(splitView)
+        let searchBarHeightConstraint = searchBar.heightAnchor.constraint(equalToConstant: 0)
+        self.searchBarHeightConstraint = searchBarHeightConstraint
         NSLayoutConstraint.activate([
+            searchBar.leadingAnchor.constraint(equalTo: leadingAnchor),
+            searchBar.trailingAnchor.constraint(equalTo: trailingAnchor),
+            searchBar.topAnchor.constraint(equalTo: topAnchor),
+            searchBarHeightConstraint,
             splitView.leadingAnchor.constraint(equalTo: leadingAnchor),
             splitView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            splitView.topAnchor.constraint(equalTo: topAnchor),
+            splitView.topAnchor.constraint(equalTo: searchBar.bottomAnchor),
             splitView.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
+        searchBar.onSearch = { [weak self] query, backwards in
+            self?.find(query, backwards: backwards)
+        }
+        searchBar.onClose = { [weak self] in
+            guard let self else { return }
+            self.searchBar.isHidden = true
+            self.searchBarHeightConstraint?.constant = 0
+            focusActivePane()
+        }
         appendPreviewView()
     }
 
@@ -135,6 +155,18 @@ final class DocumentPreviewGroup: NSView {
         let nextView = previewViews[nextIndex]
         lastActivePreviewView = nextView
         window?.makeFirstResponder(nextView.webView)
+    }
+
+    func showFindInterface() {
+        searchBar.isHidden = false
+        searchBarHeightConstraint?.constant = 40
+        searchBar.focus()
+    }
+
+    private func find(_ query: String, backwards: Bool) {
+        activePreviewView.find(query, backwards: backwards) { [weak self] matchCount in
+            self?.searchBar.update(matchCount: matchCount, for: query)
+        }
     }
 
     @discardableResult

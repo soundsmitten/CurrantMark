@@ -11,7 +11,8 @@ CurrantMark is a native macOS Markdown Browser.
 It opens Markdown
 files, follows links between them with Back and Forward navigation, watches the
 current file for changes, renders GitHub-Flavored Markdown, and exports the
-rendered page to PDF. Heading bookmarks can be toggled from preview gutters,
+rendered page to PDF. Find searches the active preview pane. Heading bookmarks
+can be toggled from preview gutters,
 opened from the Bookmarks menu, and managed in a separate app-wide window. A
 document can be split into independently scrollable preview panes without
 mixing different documents in one window.

@@ -117,9 +117,17 @@ small content bar beneath the toolbar shows filename breadcrumbs for the
 document navigation history. Breadcrumb widths are independent of selection
 and hover state. When space is limited, segments use stable compressed widths;
 hovering temporarily expands one segment over its neighbors without reflowing
-the row. The current segment exposes a disclosure control when the document
-contains links. Its menu is built from `DocumentIndex`; a future outline
-sidebar will own heading navigation.
+the row. Clicking the current segment opens its links, while Space or
+Command-click can open the links for any segment that has them. These menus are
+built from `DocumentIndex`; a future outline sidebar will own heading
+navigation.
+
+The Edit > Find command opens a native AppKit search bar backed by WebKit's
+page-level find API and searches the currently active preview pane. Search is
+presentation behavior over the rendered HTML; it does not add a second
+Markdown parser or alter the shared `RenderedDocument` consumed by preview and
+export. The bar reports a positive match count derived from the rendered page's
+visible text and leaves the count area empty when there are no matches.
 
 ### PDF export
 

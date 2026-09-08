@@ -18,6 +18,7 @@ PDF.
 - Follow anchor and folder links without exposing raw Markdown.
 - Bookmark headings from the preview and revisit them from an app-wide menu or
   Bookmarks window.
+- Search the rendered document with the native Find interface.
 - Render GitHub-Flavored Markdown.
 - Refresh automatically after on-disk changes.
 - Preserve scroll position reasonably across refreshes.

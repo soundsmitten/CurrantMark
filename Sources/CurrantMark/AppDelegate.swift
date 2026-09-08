@@ -100,6 +100,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate,
         let exportItem = fileMenu.addItem(withTitle: "Export PDF…", action: #selector(exportPDF(_:)), keyEquivalent: "e")
         exportItem.target = self
 
+        let editMenu = NSMenu(title: "Edit")
+        mainMenu.addItem(withTitle: "Edit", action: nil, keyEquivalent: "").submenu = editMenu
+        let findItem = editMenu.addItem(
+            withTitle: "Find…",
+            action: #selector(showFind(_:)),
+            keyEquivalent: "f"
+        )
+        findItem.target = self
+
         let viewMenu = NSMenu(title: "View")
         mainMenu.addItem(withTitle: "View", action: nil, keyEquivalent: "").submenu = viewMenu
         let splitItem = viewMenu.addItem(
@@ -167,6 +176,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate,
             return activeWindowController != nil
         case #selector(cyclePaneFocus(_:)), #selector(focusNavigationBar(_:)):
             return activeWindowController != nil
+        case #selector(showFind(_:)):
+            return activeWindowController != nil
         default:
             return true
         }
@@ -195,6 +206,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate,
 
     @MainActor @objc private func exportPDF(_ sender: Any?) {
         activeWindowController?.exportPDF(sender)
+    }
+
+    @MainActor @objc private func showFind(_ sender: Any?) {
+        activeWindowController?.showFind()
     }
 
     @MainActor @objc private func toggleSplit(_ sender: Any?) {

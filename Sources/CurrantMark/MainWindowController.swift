@@ -260,6 +260,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
         previewGroup.cycleFocus()
     }
 
+    func showFind() {
+        previewGroup.showFindInterface()
+    }
+
     private func toggleBookmark(at anchor: String) {
         guard let documentURL,
               let heading = currentDocument?.index.headings.first(where: {

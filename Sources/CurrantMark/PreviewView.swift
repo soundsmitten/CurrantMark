@@ -107,6 +107,49 @@ public final class PreviewView: NSView {
         }
     }
 
+    public func find(
+        _ query: String,
+        backwards: Bool,
+        completion: @escaping @MainActor @Sendable (Int) -> Void
+    ) {
+        guard !query.isEmpty else {
+            webView.evaluateJavaScript("window.getSelection()?.removeAllRanges();")
+            completion(0)
+            return
+        }
+        guard let data = try? JSONEncoder().encode(query),
+              let encodedQuery = String(data: data, encoding: .utf8) else {
+            completion(0)
+            return
+        }
+        let configuration = WKFindConfiguration()
+        configuration.backwards = backwards
+        configuration.caseSensitive = false
+        configuration.wraps = true
+        webView.find(query, configuration: configuration) { [weak self] result in
+            guard let self, result.matchFound else {
+                completion(0)
+                return
+            }
+            let script = """
+            (() => {
+              const query = \(encodedQuery).toLocaleLowerCase();
+              const text = (document.body?.innerText ?? '').toLocaleLowerCase();
+              let count = 0;
+              let index = 0;
+              while ((index = text.indexOf(query, index)) !== -1) {
+                count += 1;
+                index += query.length;
+              }
+              return count;
+            })();
+            """
+            webView.evaluateJavaScript(script) { value, _ in
+                completion((value as? NSNumber)?.intValue ?? 0)
+            }
+        }
+    }
+
     private func loadHTML(
         _ document: RenderedDocument,
         restoringScrollY scrollY: Double?,

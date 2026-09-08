@@ -31,8 +31,9 @@ architecture.
   breadcrumbs. Navigating to a document that is already an ancestor of the
   current one (via a breadcrumb segment or a dropdown link) collapses the
   path to that ancestor instead of appending a duplicate segment.
-- A links-only dropdown on any breadcrumb segment with known links, not only
-  the current one.
+- A links-only dropdown without a persistent disclosure icon: clicking the
+  current breadcrumb opens its links, and Space or Command-click opens links
+  for any breadcrumb segment that has them.
 - Folder links that present a Markdown picker rooted at the linked folder.
 - Back and Forward toolbar controls backed by a true chronological visit
   stack, independent of the breadcrumb's ancestor path: every real navigation
@@ -54,6 +55,8 @@ architecture.
 - Opening a bookmark reuses the active window (or an already-open window for
   that document) instead of always opening a new one.
 - PDF export from the current rendered document.
+- Native Find search within the active preview pane, with a compact match count
+  and previous/next controls.
 - Focused Markdown processor and document-source tests.
 - README, agent instructions, project documentation, and MIT license.
 
@@ -151,7 +154,8 @@ covering the bookmark and split-pane/navigation work:
 - There is no user-facing error banner or recovery UI beyond an alert.
 - Bookmarks currently attach to headings only. Renaming a heading changes its
   generated anchor; the stored excerpt is not yet used to recover that move.
-- The Bookmarks window does not yet provide search or grouping controls.
+- The Bookmarks window does not yet provide search or grouping controls; Find
+  searches the rendered document in the active preview pane.
 
 ## Deliberately deferred
 
