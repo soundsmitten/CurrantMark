@@ -8,6 +8,7 @@ architecture.
 - Swift Package Manager macOS executable target.
 - AppKit application lifecycle and minimal File menu.
 - `currantmark` CLI for HTML stdout and PDF export.
+- App packaging embeds the CLI at `Contents/Helpers/currantmark`.
 - Standard Open and Save panels.
 - Launch-time Open panel with no empty preview window.
 - Multiple document windows, including multi-selection in the Open panel.
@@ -70,6 +71,8 @@ architecture.
   and previous/next controls.
 - Hover-revealed code-block copy buttons with native clipboard transfer and a
   brief checkmark confirmation.
+- First-document reveal waits an additional main-loop turn after WebKit
+  navigation, avoiding presentation of its blank initial backing store.
 - Focused Markdown processor and document-source tests.
 - README, agent instructions, project documentation, and MIT license.
 
@@ -80,7 +83,10 @@ macOS (Swift 6.3.1), and the built app was run and exercised interactively,
 covering the bookmark and split-pane/navigation work:
 
 - Both executables (`CurrantMarkApp` and `currantmark`) built cleanly.
-- 22 tests executed, 0 failures.
+- `Scripts/build-app.sh` packaged the CLI at
+  `CurrantMark.app/Contents/Helpers/currantmark`; that embedded executable
+  produced styled HTML from `README.md` and exported a valid one-page PDF.
+- 23 tests executed, 0 failures.
 - The tests cover GFM headings, task-list checkboxes, tables, stylesheet
   injection, escaped code, links, images, base URLs, UTF-8 file loading,
   missing-file errors, document indexing, resolved links, heading anchors,
@@ -93,10 +99,11 @@ covering the bookmark and split-pane/navigation work:
 - Building surfaced one real defect, now fixed: `Sources/CurrantMark/main.swift`
   called the `@MainActor`-isolated `AppDelegate()` initializer and
   `makeMainMenu()` from the nonisolated top-level `main.swift` context, which
-  the Swift 6 compiler rejects as a strict-concurrency error. Both calls are
-  now wrapped in `MainActor.assumeIsolated`, which is safe because top-level
-  `main.swift` code always runs synchronously on the main thread before any
-  concurrency infrastructure starts.
+  the Swift 6 compiler rejects as a strict-concurrency error. AppKit setup and
+  the blocking run loop now live inside one `MainActor.assumeIsolated` scope,
+  so non-Sendable AppKit objects never cross the isolation boundary. This is
+  safe because top-level `main.swift` code runs synchronously on the main
+  thread before concurrency infrastructure starts.
 - Interactive testing surfaced and fixed four further defects, none caught by
   the test suite because they require a real WKWebView or window:
   - `PreviewView.scrollToAnchor(_:)` used `NSJSONSerialization` on a bare
@@ -151,9 +158,8 @@ covering the bookmark and split-pane/navigation work:
   plus manual interactive retesting confirmed by the user.
 - `swift-markdown` is pinned to an upstream revision with HTML escaping for
   text and code output.
-- Remaining unverified areas: the CLI's PDF export path has not been manually
-  re-tested with an image-containing document since the local-image-loading
-  fix.
+- Remaining unverified area: the initial-window compositor-delay adjustment
+  has not yet been exercised interactively.
 
 ## Known limitations
 

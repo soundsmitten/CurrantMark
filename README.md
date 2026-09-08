@@ -69,7 +69,14 @@ open build/CurrantMark.app
 script wraps it in a normal `.app` bundle with Markdown document type metadata
 for Finder and Launch Services.
 
-The shared pipeline is also available as a command-line tool:
+The packaging script embeds the command-line tool inside the app at
+`CurrantMark.app/Contents/Helpers/currantmark`. It can be run directly:
+
+```sh
+build/CurrantMark.app/Contents/Helpers/currantmark README.md
+```
+
+During development, the shared pipeline is also available through SwiftPM:
 
 ```sh
 swift run currantmark README.md

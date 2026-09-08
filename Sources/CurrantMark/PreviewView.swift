@@ -194,13 +194,11 @@ public final class PreviewView: NSView {
                 installBookmarkMarkers()
                 installCodeCopyButtons()
                 guard let scrollY else {
-                    webView.isHidden = false
-                    completion?()
+                    revealWebView(completion: completion)
                     return
                 }
                 webView.evaluateJavaScript("window.scrollTo(0, \(scrollY));") { _, _ in
-                    self.webView.isHidden = false
-                    completion?()
+                    self.revealWebView(completion: completion)
                 }
             },
             linkHandler: { [weak self] url in
@@ -214,6 +212,18 @@ public final class PreviewView: NSView {
             return
         }
         webView.loadFileURL(temporaryHTMLURL, allowingReadAccessTo: URL(fileURLWithPath: "/"))
+    }
+
+    private func revealWebView(completion: (() -> Void)?) {
+        webView.isHidden = false
+        webView.layoutSubtreeIfNeeded()
+
+        // WKNavigationDelegate can finish before WebKit commits its first
+        // composited frame. Keep a new document window offscreen for one more
+        // main-loop turn so AppKit never presents WebKit's blank backing store.
+        DispatchQueue.main.async {
+            completion?()
+        }
     }
 
     private func installBookmarkMarkers() {

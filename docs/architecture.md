@@ -45,7 +45,9 @@ small programmatic AppKit Settings window exposes it.
 `MainWindowController` owns one document session and wires
 the injected source, processor, preview group, and exporter together. The
 `CurrantMarkCLI` executable uses the same core processor and exporter without
-creating an AppKit window.
+creating an AppKit window. The packaging script embeds it at
+`Contents/Helpers/currantmark`; it loads styling from the enclosing app's
+Resources directory and falls back to SwiftPM resources during development.
 
 This is intentionally a small shell. It is not a general coordinator layer.
 
@@ -109,8 +111,11 @@ The panes continue to own independent scroll positions.
 
 Each `PreviewView` uses the native text background color and keeps its WebKit
 surface hidden until its first HTML navigation and requested scroll restoration
-complete. New document windows use that masking directly; split panes also
-pre-render offscreen so the visible layout changes only when the pane is ready.
+complete. WebKit can finish navigation before committing its first composited
+frame, so preview completion is deferred one additional main-loop turn after
+the hidden WebView is revealed. New document windows therefore remain
+offscreen until the backing store is ready; split panes also pre-render
+offscreen so the visible layout changes only when the pane is ready.
 Preview-only code-block buttons send their code text through a narrow WebKit
 message handler to the native pasteboard and briefly replace the clipboard icon
 with a checkmark. The injected controls are absent from `RenderedDocument`, so

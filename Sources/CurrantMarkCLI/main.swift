@@ -38,9 +38,22 @@ struct CurrantMarkCLI {
         let input = try source.load()
         return try SwiftMarkdownProcessor().render(
             markdown: input.contents,
-            style: .bundled,
+            style: renderStyle(),
             baseURL: input.url
         )
+    }
+
+    private static func renderStyle() -> RenderStyle {
+        let executableURL = URL(fileURLWithPath: CommandLine.arguments[0])
+            .standardizedFileURL
+        let appStyleURL = executableURL
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Resources/Style.css")
+        if let stylesheet = try? String(contentsOf: appStyleURL, encoding: .utf8) {
+            return RenderStyle(stylesheet: stylesheet)
+        }
+        return .bundled
     }
 
     private static func exportPDF(arguments: [String]) throws {
