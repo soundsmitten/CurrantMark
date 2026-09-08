@@ -102,12 +102,16 @@ public struct DocumentNavigationHistory {
         entries.append(standardized)
         currentIndex = entries.index(before: entries.endIndex)
 
-        guard let previousDocumentURL, previousDocumentURL != documentURL else {
+        guard let previousDocumentURL else {
             if !linkedFromCurrent {
                 parents[documentURL] = nil
             }
             return
         }
+        // Reloading or otherwise selecting the document already being viewed
+        // is not a change of browsing context. In particular, it must not
+        // detach that document from its existing breadcrumb ancestry.
+        guard previousDocumentURL != documentURL else { return }
         if isAncestor(documentURL, of: previousDocumentURL) {
             return
         }

@@ -15,7 +15,10 @@ rendered page to PDF. Find searches the active preview pane. Heading bookmarks
 can be toggled from preview gutters,
 opened from the Bookmarks menu, and managed in a separate app-wide window. A
 document can be split into independently scrollable preview panes without
-mixing different documents in one window.
+mixing different documents in one window. Standard browser shortcuts adjust
+the rendered page size across both panes. Opening an already-open file focuses
+its existing window, while File > Duplicate Window intentionally creates a
+separate reading session for the same document.
 
 ## Architecture
 

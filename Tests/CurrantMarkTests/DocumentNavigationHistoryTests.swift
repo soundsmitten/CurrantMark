@@ -105,4 +105,16 @@ final class DocumentNavigationHistoryTests: XCTestCase {
 
         XCTAssertEqual(history.path, [first])
     }
+
+    func testRevisitingCurrentDocumentDoesNotDiscardItsBreadcrumbAncestry() {
+        var history = DocumentNavigationHistory()
+        let first = URL(fileURLWithPath: "/tmp/first.md")
+        let second = URL(fileURLWithPath: "/tmp/second.md")
+
+        history.visit(first, linkedFromCurrent: false)
+        history.visit(second, linkedFromCurrent: true)
+        history.visit(second, linkedFromCurrent: false)
+
+        XCTAssertEqual(history.path, [first, second])
+    }
 }

@@ -11,6 +11,9 @@ architecture.
 - Standard Open and Save panels.
 - Launch-time Open panel with no empty preview window.
 - Multiple document windows, including multi-selection in the Open panel.
+- Explicit duplicate windows for independent reading sessions of the same
+  document, while ordinary Open and Finder requests continue to focus an
+  existing window for that URL.
 - Initial document rendering before a new window is shown.
 - Windowless application lifecycle; closing the last document does not quit.
 - A persisted setting controlling automatic Open dialogs at launch and Dock
@@ -33,22 +36,30 @@ architecture.
   path to that ancestor instead of appending a duplicate segment.
 - A links-only dropdown without a persistent disclosure icon: clicking the
   current breadcrumb opens its links, and Space or Command-click opens links
-  for any breadcrumb segment that has them.
+  for any breadcrumb segment that has them. Clicking the current breadcrumb
+  when it has no links does nothing and preserves the existing ancestor path.
 - Folder links that present a Markdown picker rooted at the linked folder.
 - Back and Forward toolbar controls backed by a true chronological visit
   stack, independent of the breadcrumb's ancestor path: every real navigation
   always pushes, so Back/Forward return to whatever was actually viewed, in
   the order it was actually viewed, even after out-of-order breadcrumb or
-  dropdown clicks.
+  dropdown clicks. The controls remain present and are disabled when their
+  direction is unavailable.
 - Keyboard navigation for the breadcrumb bar: a shortcut focuses it, arrow
   keys move between segments, Space peeks the focused segment's link dropdown
   (any segment with known links, not only the current one) without navigating
   or losing focus, Return navigates the focused segment without touching the
   dropdown, Escape returns focus to the document, and Cmd-click is the mouse
   equivalent of Space.
-- One optional same-document horizontal split with independent scroll positions.
+- One optional same-document horizontal split with independent scroll
+  positions and exact initial vertical-offset synchronization.
+- Offscreen pre-rendering and first-load masking for newly created split panes,
+  so the visible split opens only after WebKit content and its initial scroll
+  offset are ready.
 - A View-menu command that toggles the split, and a keyboard shortcut that
   cycles keyboard focus between the two panes.
+- Window-level page zoom shared by both panes, with Bigger (Command-=), Smaller
+  (Command--), and Actual Size (Command-0) commands.
 - Persistent heading bookmarks with gutter-style preview markers.
 - An app-wide Bookmarks menu with current-document and recent destinations.
 - A separate Bookmarks window for opening and removing saved locations.
@@ -57,6 +68,8 @@ architecture.
 - PDF export from the current rendered document.
 - Native Find search within the active preview pane, with a compact match count
   and previous/next controls.
+- Hover-revealed code-block copy buttons with native clipboard transfer and a
+  brief checkmark confirmation.
 - Focused Markdown processor and document-source tests.
 - README, agent instructions, project documentation, and MIT license.
 

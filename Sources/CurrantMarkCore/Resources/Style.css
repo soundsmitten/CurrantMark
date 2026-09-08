@@ -7,7 +7,32 @@ p, ul, ol, blockquote, pre, table { margin: 1em 0; }
 a { color: #1769aa; } img { max-width: 100%; height: auto; }
 blockquote { border-left: 4px solid #b9b9b9; padding-left: 1em; color: #666; }
 code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .88em; background: #f1f1f1; padding: .15em .35em; border-radius: 4px; }
-pre { padding: 16px; overflow-x: auto; border-radius: 8px; background: #f1f1f1; } pre code { background: transparent; padding: 0; }
+pre { position: relative; padding: 16px; overflow-x: auto; border-radius: 8px; background: #f1f1f1; } pre code { background: transparent; padding: 0; }
+.currantmark-code-copy {
+  appearance: none;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid #c9c9c9;
+  border-radius: 7px;
+  color: #555;
+  background: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.currantmark-code-copy svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.6; }
+pre:hover > .currantmark-code-copy,
+.currantmark-code-copy:focus-visible,
+.currantmark-code-copy.is-copied { opacity: 1; }
+.currantmark-code-copy:hover { color: #242424; border-color: #999; }
+.currantmark-code-copy.is-copied { color: #248a3d; }
 table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid #c9c9c9; padding: 7px 10px; text-align: left; }
 hr { border: 0; border-top: 1px solid #c9c9c9; }
-@media (prefers-color-scheme: dark) { a { color: #75bfff; } blockquote { color: #aaa; } code, pre { background: #303236; } th, td { border-color: #555; } }
+@media (prefers-color-scheme: dark) { a { color: #75bfff; } blockquote { color: #aaa; } code, pre { background: #303236; } th, td { border-color: #555; } .currantmark-code-copy { color: #bbb; background: #252629; border-color: #555; } .currantmark-code-copy:hover { color: #fff; border-color: #777; } .currantmark-code-copy.is-copied { color: #4ac26b; } }
+@media print { .currantmark-code-copy { display: none !important; } }

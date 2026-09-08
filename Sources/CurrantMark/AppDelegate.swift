@@ -91,6 +91,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate,
         mainMenu.addItem(withTitle: "File", action: nil, keyEquivalent: "").submenu = fileMenu
         let openItem = fileMenu.addItem(withTitle: "Open…", action: #selector(openDocument(_:)), keyEquivalent: "o")
         openItem.target = self
+        let duplicateWindowItem = fileMenu.addItem(
+            withTitle: "Duplicate Window",
+            action: #selector(duplicateDocumentWindow(_:)),
+            keyEquivalent: ""
+        )
+        duplicateWindowItem.target = self
         fileMenu.addItem(
             withTitle: "Close Window",
             action: #selector(NSWindow.performClose(_:)),
@@ -111,6 +117,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate,
 
         let viewMenu = NSMenu(title: "View")
         mainMenu.addItem(withTitle: "View", action: nil, keyEquivalent: "").submenu = viewMenu
+        let makeLargerItem = viewMenu.addItem(
+            withTitle: "Bigger",
+            action: #selector(makeContentLarger(_:)),
+            keyEquivalent: "="
+        )
+        makeLargerItem.target = self
+        let makeSmallerItem = viewMenu.addItem(
+            withTitle: "Smaller",
+            action: #selector(makeContentSmaller(_:)),
+            keyEquivalent: "-"
+        )
+        makeSmallerItem.target = self
+        let actualSizeItem = viewMenu.addItem(
+            withTitle: "Actual Size",
+            action: #selector(resetContentSize(_:)),
+            keyEquivalent: "0"
+        )
+        actualSizeItem.target = self
+        viewMenu.addItem(.separator())
         let splitItem = viewMenu.addItem(
             withTitle: "Show Split",
             action: #selector(toggleSplit(_:)),
@@ -174,7 +199,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate,
                 ? "Hide Split"
                 : "Show Split"
             return activeWindowController != nil
-        case #selector(cyclePaneFocus(_:)), #selector(focusNavigationBar(_:)):
+        case #selector(cyclePaneFocus(_:)),
+             #selector(focusNavigationBar(_:)),
+             #selector(makeContentLarger(_:)),
+             #selector(makeContentSmaller(_:)),
+             #selector(resetContentSize(_:)),
+             #selector(duplicateDocumentWindow(_:)):
             return activeWindowController != nil
         case #selector(showFind(_:)):
             return activeWindowController != nil
@@ -208,8 +238,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate,
         activeWindowController?.exportPDF(sender)
     }
 
+    @MainActor @objc private func duplicateDocumentWindow(_ sender: Any?) {
+        activeWindowController?.duplicateDocumentWindow()
+    }
+
     @MainActor @objc private func showFind(_ sender: Any?) {
         activeWindowController?.showFind()
+    }
+
+    @MainActor @objc private func makeContentLarger(_ sender: Any?) {
+        activeWindowController?.makeContentLarger()
+    }
+
+    @MainActor @objc private func makeContentSmaller(_ sender: Any?) {
+        activeWindowController?.makeContentSmaller()
+    }
+
+    @MainActor @objc private func resetContentSize(_ sender: Any?) {
+        activeWindowController?.resetContentSize()
     }
 
     @MainActor @objc private func toggleSplit(_ sender: Any?) {
@@ -291,6 +337,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate,
         }
         controller.onBookmarksChanged = { [weak self] in
             self?.refreshBookmarkSurfaces()
+        }
+        controller.onDuplicate = { [weak self] url in
+            guard let self else { return }
+            let duplicate = self.makeDocumentWindowController()
+            self.windowControllers.append(duplicate)
+            duplicate.open(url: url)
         }
         return controller
     }

@@ -88,7 +88,7 @@ final class DocumentNavigationBar: NSView {
                 self.toggleExpand(atSegment: index, sender: segment)
             }
             segment.onActivate = { [weak self] in
-                self?.onSelectHistoryItem?(url)
+                self?.activateSegment(at: index, url: url)
             }
             segment.onEscape = { [weak self] in
                 self?.onRequestMainPaneFocus?()
@@ -221,15 +221,25 @@ final class DocumentNavigationBar: NSView {
 
     @objc private func selectSegment(_ sender: BreadcrumbButton) {
         // Clicking the current segment can't navigate anywhere new, so it
-        // shows that document's links instead, if any exist. Clicking any
-        // other segment navigates to it directly, matching the primary
-        // breadcrumb behavior. To view an older document's links without
-        // navigating away, keyboard-focus its segment and press Space.
-        if sender.index == selectedIndex, let links = links(atSegment: sender.index), !links.isEmpty {
-            showLinks(links, from: sender)
-        } else {
-            onSelectHistoryItem?(sender.url)
+        // shows that document's links when any exist and otherwise does
+        // nothing. Clicking another segment navigates to it directly. To
+        // view an older document's links without navigating away,
+        // keyboard-focus its segment and press Space.
+        guard sender.index != selectedIndex else {
+            if let links = links(atSegment: sender.index), !links.isEmpty {
+                showLinks(links, from: sender)
+            }
+            return
         }
+        onSelectHistoryItem?(sender.url)
+    }
+
+    private func activateSegment(at index: Int, url: URL) {
+        // Return is navigation-only: unlike clicking the current segment it
+        // never opens a links menu, and selecting the current document is a
+        // no-op rather than a same-document reload.
+        guard index != selectedIndex else { return }
+        onSelectHistoryItem?(url)
     }
 
     private func showLinks(_ links: [DocumentLink], from sender: NSButton) {

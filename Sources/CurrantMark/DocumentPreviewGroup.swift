@@ -7,7 +7,7 @@ final class DocumentPreviewGroup: NSView {
     var onLinkActivated: ((URL) -> Void)?
 
     var isSplit: Bool {
-        previewViews.count > 1
+        previewViews.count > 1 || pendingSplitID != nil
     }
 
     private let splitView = NSSplitView()
@@ -17,6 +17,9 @@ final class DocumentPreviewGroup: NSView {
     private weak var lastActivePreviewView: PreviewView?
     private var currentDocument: RenderedDocument?
     private var bookmarkedAnchors: Set<String> = []
+    private var pendingSplitID: UUID?
+    private var pendingPreviewView: PreviewView?
+    private var pageZoom = 1.0
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -62,6 +65,7 @@ final class DocumentPreviewGroup: NSView {
         preservingScroll: Bool,
         completion: (() -> Void)? = nil
     ) {
+        cancelPendingSplit()
         currentDocument = document
         for (index, previewView) in previewViews.enumerated() {
             previewView.load(
@@ -73,25 +77,47 @@ final class DocumentPreviewGroup: NSView {
     }
 
     func toggleSplit() {
-        if isSplit {
+        if previewViews.count > 1 {
             removeSecondaryPreviewView()
+        } else if pendingSplitID != nil {
+            cancelPendingSplit()
         } else {
             addSecondaryPreviewView()
         }
     }
 
     private func addSecondaryPreviewView() {
-        let sourcePreviewView = activePreviewView
-        let previewView = appendPreviewView()
-        evenlySplitPanes()
         guard let currentDocument else { return }
+        let sourcePreviewView = activePreviewView
+        let splitID = UUID()
+        pendingSplitID = splitID
 
-        sourcePreviewView.currentHeadingAnchor { [weak previewView] anchor in
-            previewView?.load(currentDocument, preservingScroll: false) {
-                if let anchor {
-                    previewView?.scrollToAnchor(anchor)
+        sourcePreviewView.currentScrollOffset { [weak self] scrollY in
+            guard let self, pendingSplitID == splitID else { return }
+            let previewView = makePreviewView()
+            let width = max(1, (splitView.bounds.width - splitView.dividerThickness) / 2)
+            previewView.frame = NSRect(
+                x: 0,
+                y: 0,
+                width: width,
+                height: splitView.bounds.height
+            )
+            previewView.layoutSubtreeIfNeeded()
+            pendingPreviewView = previewView
+            previewView.load(currentDocument, restoringScrollY: scrollY) { [weak self, weak previewView] in
+                guard let self,
+                      let previewView,
+                      pendingPreviewView === previewView,
+                      pendingSplitID == splitID else {
+                    return
                 }
-                previewView?.window?.makeFirstResponder(previewView?.webView)
+                pendingSplitID = nil
+                pendingPreviewView = nil
+                previewViews.append(previewView)
+                splitView.addArrangedSubview(previewView)
+                evenlySplitPanes()
+                lastActivePreviewView = previewView
+                window?.makeFirstResponder(previewView.webView)
             }
         }
     }
@@ -107,10 +133,11 @@ final class DocumentPreviewGroup: NSView {
         guard axisLength > 0 else { return }
         let midpoint = (axisLength - splitView.dividerThickness) / 2
         splitView.setPosition(midpoint, ofDividerAt: 0)
+        splitView.layoutSubtreeIfNeeded()
     }
 
     private func removeSecondaryPreviewView() {
-        guard let previewView = previewViews.last, isSplit else { return }
+        guard let previewView = previewViews.last, previewViews.count > 1 else { return }
         splitView.removeArrangedSubview(previewView)
         previewView.removeFromSuperview()
         previewViews.removeAll { $0 === previewView }
@@ -119,6 +146,11 @@ final class DocumentPreviewGroup: NSView {
         if let lastActivePreviewView {
             window?.makeFirstResponder(lastActivePreviewView.webView)
         }
+    }
+
+    private func cancelPendingSplit() {
+        pendingSplitID = nil
+        pendingPreviewView = nil
     }
 
     func scrollToAnchor(_ anchor: String) {
@@ -163,6 +195,23 @@ final class DocumentPreviewGroup: NSView {
         searchBar.focus()
     }
 
+    func makeContentLarger() {
+        setPageZoom(pageZoom + 0.1)
+    }
+
+    func makeContentSmaller() {
+        setPageZoom(pageZoom - 0.1)
+    }
+
+    func resetContentSize() {
+        setPageZoom(1)
+    }
+
+    private func setPageZoom(_ proposedZoom: Double) {
+        pageZoom = min(3, max(0.5, (proposedZoom * 10).rounded() / 10))
+        previewViews.forEach { $0.setPageZoom(pageZoom) }
+    }
+
     private func find(_ query: String, backwards: Bool) {
         activePreviewView.find(query, backwards: backwards) { [weak self] matchCount in
             self?.searchBar.update(matchCount: matchCount, for: query)
@@ -171,6 +220,14 @@ final class DocumentPreviewGroup: NSView {
 
     @discardableResult
     private func appendPreviewView() -> PreviewView {
+        let previewView = makePreviewView()
+        previewViews.append(previewView)
+        splitView.addArrangedSubview(previewView)
+        lastActivePreviewView = previewView
+        return previewView
+    }
+
+    private func makePreviewView() -> PreviewView {
         let previewView = PreviewView(frame: .zero)
         previewView.onLinkActivated = { [weak self, weak previewView] url in
             self?.lastActivePreviewView = previewView
@@ -180,10 +237,8 @@ final class DocumentPreviewGroup: NSView {
             self?.lastActivePreviewView = previewView
             self?.onBookmarkActivated?(anchor)
         }
+        previewView.setPageZoom(pageZoom)
         previewView.setBookmarkedAnchors(bookmarkedAnchors)
-        previewViews.append(previewView)
-        splitView.addArrangedSubview(previewView)
-        lastActivePreviewView = previewView
         return previewView
     }
 

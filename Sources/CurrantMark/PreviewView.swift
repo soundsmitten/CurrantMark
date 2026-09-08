@@ -6,6 +6,7 @@ import WebKit
 public final class PreviewView: NSView {
     public let webView: WKWebView
     private let bookmarkMessageHandler = BookmarkMessageHandler()
+    private let codeCopyMessageHandler = CodeCopyMessageHandler()
     private var navigationDelegate: CompletionNavigationDelegate?
     private var headingAnchors: [String] = []
     private var bookmarkedAnchors: Set<String> = []
@@ -33,9 +34,16 @@ public final class PreviewView: NSView {
             bookmarkMessageHandler,
             name: BookmarkMessageHandler.name
         )
+        configuration.userContentController.add(
+            codeCopyMessageHandler,
+            name: CodeCopyMessageHandler.name
+        )
         webView = WKWebView(frame: .zero, configuration: configuration)
         webView.underPageBackgroundColor = .textBackgroundColor
+        webView.isHidden = true
         super.init(frame: frameRect)
+        wantsLayer = true
+        layer?.backgroundColor = NSColor.textBackgroundColor.cgColor
         bookmarkMessageHandler.onBookmarkActivated = { [weak self] anchor in
             self?.onBookmarkActivated?(anchor)
         }
@@ -51,6 +59,12 @@ public final class PreviewView: NSView {
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    public override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        layer?.backgroundColor = NSColor.textBackgroundColor.cgColor
+        webView.underPageBackgroundColor = .textBackgroundColor
+    }
 
     deinit {
         let url = temporaryHTMLURL
@@ -76,6 +90,21 @@ public final class PreviewView: NSView {
         }
     }
 
+    public func load(
+        _ document: RenderedDocument,
+        restoringScrollY scrollY: Double,
+        completion: (() -> Void)? = nil
+    ) {
+        headingAnchors = document.index.headings.map(\.anchor)
+        loadHTML(document, restoringScrollY: scrollY, completion: completion)
+    }
+
+    public func currentScrollOffset(completion: @escaping (Double) -> Void) {
+        webView.evaluateJavaScript("window.scrollY") { value, _ in
+            completion((value as? NSNumber)?.doubleValue ?? 0)
+        }
+    }
+
     public func scrollToAnchor(_ anchor: String) {
         // NSJSONSerialization requires an Array/Dictionary top-level object and
         // raises an uncaught NSException (not a catchable Swift error) for a bare
@@ -92,6 +121,10 @@ public final class PreviewView: NSView {
     public func setBookmarkedAnchors(_ anchors: Set<String>) {
         bookmarkedAnchors = anchors
         installBookmarkMarkers()
+    }
+
+    public func setPageZoom(_ pageZoom: Double) {
+        webView.pageZoom = pageZoom
     }
 
     public func currentHeadingAnchor(completion: @escaping (String?) -> Void) {
@@ -159,11 +192,14 @@ public final class PreviewView: NSView {
             completion: { [weak self] in
                 guard let self else { return }
                 installBookmarkMarkers()
+                installCodeCopyButtons()
                 guard let scrollY else {
+                    webView.isHidden = false
                     completion?()
                     return
                 }
                 webView.evaluateJavaScript("window.scrollTo(0, \(scrollY));") { _, _ in
+                    self.webView.isHidden = false
                     completion?()
                 }
             },
@@ -252,6 +288,53 @@ public final class PreviewView: NSView {
         webView.evaluateJavaScript(script)
     }
 
+    private func installCodeCopyButtons() {
+        let script = """
+        (() => {
+          const clipboardIcon = `
+            <svg viewBox="0 0 18 18" aria-hidden="true">
+              <rect x="5" y="4" width="9" height="11" rx="1.5"></rect>
+              <path d="M7 4V3.5A1.5 1.5 0 0 1 8.5 2h2A1.5 1.5 0 0 1 12 3.5V4"></path>
+              <path d="M5 6H3.5A1.5 1.5 0 0 0 2 7.5v7A1.5 1.5 0 0 0 3.5 16h7A1.5 1.5 0 0 0 12 14.5"></path>
+            </svg>`;
+          const checkmarkIcon = `
+            <svg viewBox="0 0 18 18" aria-hidden="true">
+              <path d="m3.5 9.5 3.2 3.2 7.8-8"></path>
+            </svg>`;
+
+          for (const block of document.querySelectorAll('pre')) {
+            if (block.querySelector(':scope > .currantmark-code-copy')) continue;
+            const code = block.querySelector('code');
+            if (!code) continue;
+
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'currantmark-code-copy';
+            button.innerHTML = clipboardIcon;
+            button.title = 'Copy code';
+            button.setAttribute('aria-label', 'Copy code');
+            button.addEventListener('click', event => {
+              event.preventDefault();
+              event.stopPropagation();
+              window.webkit.messageHandlers.\(CodeCopyMessageHandler.name).postMessage(code.textContent ?? '');
+              button.innerHTML = checkmarkIcon;
+              button.classList.add('is-copied');
+              button.title = 'Copied';
+              button.setAttribute('aria-label', 'Copied');
+              window.setTimeout(() => {
+                button.innerHTML = clipboardIcon;
+                button.classList.remove('is-copied');
+                button.title = 'Copy code';
+                button.setAttribute('aria-label', 'Copy code');
+              }, 1500);
+            });
+            block.appendChild(button);
+          }
+        })();
+        """
+        webView.evaluateJavaScript(script)
+    }
+
     private static func jsonString(_ value: Any) -> String? {
         guard JSONSerialization.isValidJSONObject(value),
               let data = try? JSONSerialization.data(withJSONObject: value),
@@ -272,6 +355,20 @@ private final class BookmarkMessageHandler: NSObject, WKScriptMessageHandler {
     ) {
         guard let anchor = message.body as? String else { return }
         onBookmarkActivated?(anchor)
+    }
+}
+
+private final class CodeCopyMessageHandler: NSObject, WKScriptMessageHandler {
+    static let name = "currantmarkCodeCopy"
+
+    func userContentController(
+        _ userContentController: WKUserContentController,
+        didReceive message: WKScriptMessage
+    ) {
+        guard let code = message.body as? String else { return }
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(code, forType: .string)
     }
 }
 

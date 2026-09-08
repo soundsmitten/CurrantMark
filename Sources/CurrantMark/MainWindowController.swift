@@ -20,9 +20,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
     private var style: RenderStyle
     private var currentDocument: RenderedDocument?
     private var securityScopedURL: URL?
-    private var didRevealNavigationItems = false
     var onClose: (() -> Void)?
     var onBookmarksChanged: (() -> Void)?
+    var onDuplicate: ((URL) -> Void)?
 
     var documentURL: URL? {
         source?.documentURL
@@ -141,7 +141,6 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
             navigationHistory.visit(url, linkedFromCurrent: false)
         }
         navigationBar.updateHistory(navigationHistory)
-        revealNavigationItemsIfNeeded()
         window?.toolbar?.validateVisibleItems()
         loadCurrentDocument(preservingScroll: false) { [weak self] in
             self?.showWindow(nil)
@@ -195,17 +194,6 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
             guard response == .OK, let url = panel.url else { return }
             self?.navigate(to: url, recording: .link)
         }
-    }
-
-    private func revealNavigationItemsIfNeeded() {
-        guard navigationHistory.hasNavigated,
-              !didRevealNavigationItems,
-              let toolbar = window?.toolbar else {
-            return
-        }
-        didRevealNavigationItems = true
-        toolbar.insertItem(withItemIdentifier: ToolbarItemIdentifier.back, at: 0)
-        toolbar.insertItem(withItemIdentifier: ToolbarItemIdentifier.forward, at: 1)
     }
 
     func toggleBookmarkAtReadingPosition() {
@@ -262,6 +250,23 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
 
     func showFind() {
         previewGroup.showFindInterface()
+    }
+
+    func makeContentLarger() {
+        previewGroup.makeContentLarger()
+    }
+
+    func makeContentSmaller() {
+        previewGroup.makeContentSmaller()
+    }
+
+    func resetContentSize() {
+        previewGroup.resetContentSize()
+    }
+
+    func duplicateDocumentWindow() {
+        guard let documentURL else { return }
+        onDuplicate?(documentURL)
     }
 
     private func toggleBookmark(at anchor: String) {
@@ -325,7 +330,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
     }
 
     func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        []
+        [ToolbarItemIdentifier.back, ToolbarItemIdentifier.forward]
     }
 
     func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {

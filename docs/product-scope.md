@@ -12,6 +12,8 @@ PDF.
 - Open Markdown files through a standard Open panel.
 - Open Markdown files from Finder.
 - Open each document in its own native window.
+- Allow an explicit duplicate window for a second independent reading session
+  of the current document without changing normal Open deduplication.
 - Show one optional second pane for an independently scrollable position in the
   same document; never mix different documents in one window's split view.
 - Follow links between Markdown files with Back and Forward navigation.
@@ -22,6 +24,7 @@ PDF.
 - Render GitHub-Flavored Markdown.
 - Refresh automatically after on-disk changes.
 - Preserve scroll position reasonably across refreshes.
+- Adjust rendered-page size with standard browser keyboard shortcuts.
 - Export the rendered document to PDF.
 - Provide a small command-line path for HTML output and PDF export.
 - Use a minimal native AppKit shell and WKWebView rendering surface.
