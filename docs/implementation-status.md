@@ -25,11 +25,20 @@ architecture.
 - In-window navigation for links to Markdown files.
 - Anchor IDs and in-document anchor navigation.
 - Native document proxy and filename title.
-- Filename breadcrumbs for document history, with stable compressed widths and
-  hover expansion that does not reflow neighboring breadcrumbs.
-- A links-only dropdown on the current document breadcrumb.
+- Filename breadcrumbs showing the document's ancestor path (the chain of
+  link-followed parents back to a root), not a flat visit log, with stable
+  compressed widths and hover expansion that does not reflow neighboring
+  breadcrumbs. Navigating to a document that is already an ancestor of the
+  current one (via a breadcrumb segment or a dropdown link) collapses the
+  path to that ancestor instead of appending a duplicate segment.
+- A links-only dropdown on any breadcrumb segment with known links, not only
+  the current one.
 - Folder links that present a Markdown picker rooted at the linked folder.
-- Back and Forward toolbar controls that appear after navigation begins.
+- Back and Forward toolbar controls backed by a true chronological visit
+  stack, independent of the breadcrumb's ancestor path: every real navigation
+  always pushes, so Back/Forward return to whatever was actually viewed, in
+  the order it was actually viewed, even after out-of-order breadcrumb or
+  dropdown clicks.
 - Keyboard navigation for the breadcrumb bar: a shortcut focuses it, arrow
   keys move between segments, Space peeks the focused segment's link dropdown
   (any segment with known links, not only the current one) without navigating
@@ -55,7 +64,7 @@ macOS (Swift 6.3.1), and the built app was run and exercised interactively,
 covering the bookmark and split-pane/navigation work:
 
 - Both executables (`CurrantMarkApp` and `currantmark`) built cleanly.
-- 20 tests executed, 0 failures.
+- 22 tests executed, 0 failures.
 - The tests cover GFM headings, task-list checkboxes, tables, stylesheet
   injection, escaped code, links, images, base URLs, UTF-8 file loading,
   missing-file errors, document indexing, resolved links, heading anchors,
@@ -108,6 +117,22 @@ covering the bookmark and split-pane/navigation work:
   data for non-current segments is served from a per-URL cache populated as
   each document is rendered, since `DocumentNavigationHistory` itself only
   stores URLs.
+- The original breadcrumb model rendered the entire chronological visit log
+  as segments, so re-visiting a document (for example, picking an earlier
+  breadcrumb or a dropdown link back to something upstream) appended a
+  duplicate segment instead of collapsing, and Back/Forward silently used
+  breadcrumb-array position instead of true visit order once a segment was
+  clicked out of order. `DocumentNavigationHistory` was redesigned around two
+  independent tracks: a chronological visit stack that Back/Forward operate
+  on unconditionally, and a parent/child ancestor tree, updated only by real
+  link-driven navigation, that the breadcrumb bar renders as `path`.
+  Navigating to an existing ancestor reuses that relationship (cycle-safe,
+  bounded walk) instead of creating a new edge; unrelated navigation (a
+  bookmark, File > Open) starts a fresh single-segment path unless the target
+  is already an ancestor, in which case it jumps there instead. Verified with
+  four new regression tests covering out-of-order Back/Forward, path
+  collapsing on ancestor revisit, and both branches of unrelated navigation,
+  plus manual interactive retesting confirmed by the user.
 - `swift-markdown` is pinned to an upstream revision with HTML escaping for
   text and code output.
 - Remaining unverified areas: the CLI's PDF export path has not been manually

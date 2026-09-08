@@ -9,7 +9,7 @@ private enum BreadcrumbFocusDirection {
 
 @MainActor
 final class DocumentNavigationBar: NSView {
-    var onSelectHistoryItem: ((Int) -> Void)?
+    var onSelectHistoryItem: ((URL) -> Void)?
     var onSelectLink: ((URL) -> Void)?
     /// Called whenever a breadcrumb interaction ends (Escape, a link
     /// dropdown closing, or Return navigating) so the caller can hand
@@ -59,13 +59,17 @@ final class DocumentNavigationBar: NSView {
     }
 
     func updateHistory(_ history: DocumentNavigationHistory) {
-        selectedIndex = history.selectedIndex
-        historyItems = history.items
+        let path = history.path
+        // `path` always ends at the document currently being viewed, so the
+        // last segment is always the current one.
+        selectedIndex = path.indices.last
+        historyItems = path
         segments.forEach { $0.removeFromSuperview() }
-        segments = history.items.enumerated().map { index, url in
+        segments = path.enumerated().map { index, url in
             let segment = BreadcrumbButton(
                 title: url.deletingPathExtension().lastPathComponent,
-                index: index
+                index: index,
+                url: url
             )
             segment.target = self
             segment.action = #selector(selectSegment(_:))
@@ -84,7 +88,7 @@ final class DocumentNavigationBar: NSView {
                 self.toggleExpand(atSegment: index, sender: segment)
             }
             segment.onActivate = { [weak self] in
-                self?.onSelectHistoryItem?(index)
+                self?.onSelectHistoryItem?(url)
             }
             segment.onEscape = { [weak self] in
                 self?.onRequestMainPaneFocus?()
@@ -225,7 +229,7 @@ final class DocumentNavigationBar: NSView {
         if sender.index == selectedIndex, let links = links(atSegment: sender.index), !links.isEmpty {
             showLinks(links, from: sender)
         } else {
-            onSelectHistoryItem?(sender.index)
+            onSelectHistoryItem?(sender.url)
         }
     }
 
@@ -274,6 +278,9 @@ private final class BreadcrumbButton: NSButton {
     }
 
     let index: Int
+    /// The document this segment represents, so click/Return activation
+    /// can navigate to it directly without needing to look it up by index.
+    let url: URL
     var onHover: ((Bool) -> Void)?
     var onMoveFocus: ((BreadcrumbFocusDirection) -> Void)?
     /// Called when Space is pressed while this segment has keyboard focus.
@@ -308,8 +315,9 @@ private final class BreadcrumbButton: NSButton {
         return ceil(titleWidth) + 42
     }
 
-    init(title: String, index: Int) {
+    init(title: String, index: Int, url: URL) {
         self.index = index
+        self.url = url
         super.init(frame: .zero)
         self.title = title
         isBordered = false

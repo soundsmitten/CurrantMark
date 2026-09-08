@@ -70,8 +70,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
         navigationBar.onSelectLink = { [weak self] url in
             self?.followLink(to: url)
         }
-        navigationBar.onSelectHistoryItem = { [weak self] index in
-            self?.navigateThroughHistory(to: index)
+        navigationBar.onSelectHistoryItem = { [weak self] url in
+            self?.navigate(to: url, recording: .unrelated)
         }
         navigationBar.onRequestMainPaneFocus = { [weak self] in
             self?.previewGroup.focusActivePane()
@@ -101,11 +101,27 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-    func open(url: URL) {
-        navigate(to: url, recordingHistory: true)
+    /// How a navigation should be recorded in the window's chronological
+    /// history and ancestor tree. See `DocumentNavigationHistory` for why
+    /// these are two separate concerns.
+    private enum HistoryRecording {
+        /// The chronological pointer was already moved by the caller
+        /// (Back or Forward); don't record a new visit.
+        case none
+        /// A genuine parent -> child step, such as following a link or
+        /// picking a file from a folder link's picker.
+        case link
+        /// Navigation with no inherent relationship to the document
+        /// currently being viewed, such as opening a bookmark, a
+        /// breadcrumb-segment click, or a file from File -> Open.
+        case unrelated
     }
 
-    private func navigate(to url: URL, recordingHistory: Bool) {
+    func open(url: URL) {
+        navigate(to: url, recording: .unrelated)
+    }
+
+    private func navigate(to url: URL, recording: HistoryRecording) {
         let documentURL = url.removingFragment
         source?.stopWatching()
         securityScopedURL?.stopAccessingSecurityScopedResource()
@@ -116,8 +132,13 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
         source = newSource
         window?.title = documentURL.lastPathComponent
         window?.representedURL = documentURL
-        if recordingHistory {
-            navigationHistory.visit(url)
+        switch recording {
+        case .none:
+            break
+        case .link:
+            navigationHistory.visit(url, linkedFromCurrent: true)
+        case .unrelated:
+            navigationHistory.visit(url, linkedFromCurrent: false)
         }
         navigationBar.updateHistory(navigationHistory)
         revealNavigationItemsIfNeeded()
@@ -134,17 +155,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
 
     @objc private func goBack(_ sender: Any?) {
         guard let url = navigationHistory.goBack() else { return }
-        navigate(to: url, recordingHistory: false)
+        navigate(to: url, recording: .none)
     }
 
     @objc private func goForward(_ sender: Any?) {
         guard let url = navigationHistory.goForward() else { return }
-        navigate(to: url, recordingHistory: false)
-    }
-
-    private func navigateThroughHistory(to index: Int) {
-        guard let url = navigationHistory.move(to: index) else { return }
-        navigate(to: url, recordingHistory: false)
+        navigate(to: url, recording: .none)
     }
 
     private func followLink(to url: URL) {
@@ -160,7 +176,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
                 previewGroup.scrollToAnchor(anchor)
                 previewGroup.focusActivePane()
             } else {
-                navigate(to: url.standardizedFileURL, recordingHistory: true)
+                navigate(to: url.standardizedFileURL, recording: .link)
             }
         } else {
             NSWorkspace.shared.open(url)
@@ -177,7 +193,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
         panel.allowsMultipleSelection = false
         panel.beginSheetModal(for: window) { [weak self] response in
             guard response == .OK, let url = panel.url else { return }
-            self?.navigate(to: url, recordingHistory: true)
+            self?.navigate(to: url, recording: .link)
         }
     }
 
@@ -215,7 +231,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
         components?.fragment = bookmark.anchor
         navigate(
             to: components?.url ?? bookmark.documentURL,
-            recordingHistory: true
+            recording: .unrelated
         )
     }
 
