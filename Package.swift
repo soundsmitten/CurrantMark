@@ -25,7 +25,11 @@ let package = Package(
         .executableTarget(
             name: "CurrantMark",
             dependencies: ["CurrantMarkCore"],
-            exclude: ["Resources/Info.plist", "Resources/AppIcon.png"]
+            exclude: [
+                "Resources/Info.plist",
+                "Resources/AppIcon.icon",
+                "Resources/AppIcon.png"
+            ]
         ),
         .executableTarget(
             name: "CurrantMarkCLI",

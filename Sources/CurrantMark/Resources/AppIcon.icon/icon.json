@@ -1,0 +1,41 @@
+{
+  "fill" : {
+    "solid" : "srgb:0.03137,0.09412,0.23137,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "blend-mode" : "lighten",
+          "fill" : "automatic",
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "SaturnForeground.png",
+          "name" : "SaturnForeground",
+          "opacity" : 0.74,
+          "position" : {
+            "scale" : 0.8,
+            "translation-in-points" : [
+              -10.399999999999977,
+              29.7265625
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

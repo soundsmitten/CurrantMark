@@ -75,6 +75,9 @@ architecture.
   navigation, avoiding presentation of its blank initial backing store.
 - Focused Markdown processor and document-source tests.
 - Swift 6 language mode with complete concurrency checking enabled package-wide.
+- Icon Composer source at `Sources/CurrantMark/Resources/AppIcon.icon`, with
+  a flat navy background, transparent Saturn foreground, and Liquid Glass
+  disabled for the artwork; the packaged app retains a rendered PNG fallback.
 - README, agent instructions, project documentation, and MIT license.
 
 ## Latest validation
