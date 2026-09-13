@@ -2,6 +2,7 @@ import Foundation
 import XCTest
 @testable import CurrantMarkCore
 
+@MainActor
 final class DocumentSourceTests: XCTestCase {
     func testLoadsUTF8MarkdownFromFile() throws {
         let url = try makeTemporaryMarkdown(contents: "# Café\n\nHello")

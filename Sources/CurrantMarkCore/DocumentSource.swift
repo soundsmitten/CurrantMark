@@ -11,10 +11,11 @@ public struct SourceDocument {
     }
 }
 
+@MainActor
 public protocol DocumentSource: AnyObject {
     var documentURL: URL { get }
     func load() throws -> SourceDocument
-    func startWatching(onChange: @escaping () -> Void)
+    func startWatching(onChange: @escaping @MainActor @Sendable () -> Void)
     func stopWatching()
 }
 
@@ -28,6 +29,7 @@ public enum DocumentSourceError: LocalizedError {
     }
 }
 
+@MainActor
 public final class FileDocumentSource: DocumentSource {
     public let documentURL: URL
     private var fileDescriptor: Int32 = -1
@@ -37,7 +39,9 @@ public final class FileDocumentSource: DocumentSource {
         documentURL = url.standardizedFileURL
     }
 
-    deinit { stopWatching() }
+    deinit {
+        source?.cancel()
+    }
 
     public func load() throws -> SourceDocument {
         guard let contents = try? String(contentsOf: documentURL, encoding: .utf8) else {
@@ -46,7 +50,7 @@ public final class FileDocumentSource: DocumentSource {
         return SourceDocument(url: documentURL, contents: contents)
     }
 
-    public func startWatching(onChange: @escaping () -> Void) {
+    public func startWatching(onChange: @escaping @MainActor @Sendable () -> Void) {
         stopWatching()
         fileDescriptor = open(documentURL.path, O_EVTONLY)
         guard fileDescriptor >= 0 else { return }

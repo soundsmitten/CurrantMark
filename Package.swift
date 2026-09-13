@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.0
 import PackageDescription
 
 let package = Package(
@@ -25,7 +25,7 @@ let package = Package(
         .executableTarget(
             name: "CurrantMark",
             dependencies: ["CurrantMarkCore"],
-            exclude: ["Resources/Info.plist"]
+            exclude: ["Resources/Info.plist", "Resources/AppIcon.png"]
         ),
         .executableTarget(
             name: "CurrantMarkCLI",
@@ -35,5 +35,6 @@ let package = Package(
             name: "CurrantMarkTests",
             dependencies: ["CurrantMarkCore"]
         )
-    ]
+    ],
+    swiftLanguageModes: [.v6]
 )

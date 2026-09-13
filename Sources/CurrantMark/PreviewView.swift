@@ -382,11 +382,15 @@ private final class CodeCopyMessageHandler: NSObject, WKScriptMessageHandler {
     }
 }
 
+@MainActor
 private final class CompletionNavigationDelegate: NSObject, WKNavigationDelegate {
-    private var completion: (() -> Void)?
-    private let linkHandler: (URL) -> Void
+    private var completion: (@MainActor @Sendable () -> Void)?
+    private let linkHandler: @MainActor @Sendable (URL) -> Void
 
-    init(completion: @escaping () -> Void, linkHandler: @escaping (URL) -> Void) {
+    init(
+        completion: @escaping @MainActor @Sendable () -> Void,
+        linkHandler: @escaping @MainActor @Sendable (URL) -> Void
+    ) {
         self.completion = completion
         self.linkHandler = linkHandler
     }
@@ -394,7 +398,7 @@ private final class CompletionNavigationDelegate: NSObject, WKNavigationDelegate
     func webView(
         _ webView: WKWebView,
         decidePolicyFor navigationAction: WKNavigationAction,
-        decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+        decisionHandler: @escaping @MainActor @Sendable (WKNavigationActionPolicy) -> Void
     ) {
         guard navigationAction.navigationType == .linkActivated,
               let url = navigationAction.request.url else {

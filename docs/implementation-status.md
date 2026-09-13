@@ -74,6 +74,7 @@ architecture.
 - First-document reveal waits an additional main-loop turn after WebKit
   navigation, avoiding presentation of its blank initial backing store.
 - Focused Markdown processor and document-source tests.
+- Swift 6 language mode with complete concurrency checking enabled package-wide.
 - README, agent instructions, project documentation, and MIT license.
 
 ## Latest validation

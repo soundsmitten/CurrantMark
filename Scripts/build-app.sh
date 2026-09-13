@@ -16,6 +16,7 @@ mkdir -p \
 cp "$ROOT_DIR/.build/release/CurrantMarkApp" "$APP_DIR/Contents/MacOS/CurrantMark"
 cp "$ROOT_DIR/.build/release/currantmark" "$APP_DIR/Contents/Helpers/currantmark"
 cp "$ROOT_DIR/Sources/CurrantMark/Resources/Info.plist" "$APP_DIR/Contents/Info.plist"
+cp "$ROOT_DIR/Sources/CurrantMark/Resources/AppIcon.png" "$APP_DIR/Contents/Resources/AppIcon.png"
 cp "$ROOT_DIR/Sources/CurrantMarkCore/Resources/Style.css" "$APP_DIR/Contents/Resources/Style.css"
 
 echo "Built $APP_DIR"
